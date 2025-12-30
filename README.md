@@ -55,19 +55,14 @@ crime_project/
 
 ## How to Replicate
 
-1. Clone this repository or download the folder.
-2. Open STATA and open `code/run_project.do`.
-3. Edit the **global path** in line 15 to match your folder location:
-   ```stata
-   global path "/Users/YOUR_NAME/Documents/GitHub/crime_project"
-
-```
-
-4. Run the master file:
+1. Clone this repository.
+2. Download raw data
+3. Open STATA and run:
 ```stata
 do "code/run_project.do"
 
 ```
+
 
 
 
