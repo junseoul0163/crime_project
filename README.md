@@ -56,7 +56,7 @@ crime_project/
 ## How to Replicate
 
 1. Clone this repository.
-2. Download raw data
+2. Download raw data(see data/raw/README.md for instructions)
 3. Open STATA and run:
 ```stata
 do "code/run_project.do"
