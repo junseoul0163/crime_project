@@ -68,6 +68,9 @@ drop group_code
 * Rename FIPS to state_id (Crucial for xtset later!)
 rename fips state_id
 
+* Turn "01" (text) into 1 (number) so it matches the Crime file!
+destring state_id, replace
+
 * Label variables
 label variable state_id "State FIPS Code"
 label variable unemp_rate "Unemployment Rate (%)"

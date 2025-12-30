@@ -1,45 +1,53 @@
 /*==============================================================================
     Project:    Economics of Crime
     File:       01_clean_crime.do
-    Purpose:    Import and clean FBI Crime Data
-    Author:     [Your Name]
+    Purpose:    Import and clean FBI Crime Data (WITH ID GENERATION)
+    Author:     Jun Hwang
 ==============================================================================*/
 
-*--- 0. SET THE KITCHEN LOCATION ---*
-* Set working directory 
-cd "/Users/heejunhwang/Documents/GitHub/crime_project" 
+*--- 0. SETUP ---*
+global path "/Users/heejunhwang/Documents/GitHub/crime_project"
+cd "$path"
 
-* Clear everything
 clear all                   
-set more off              
+set more off                
 
-*--- STEP 1: BRING THE INGREDIENTS TO THE DESK ---*
-* We use "import delimited" because CSVs are separated by commas.
-* "varnames(1)" tells STATA the first row contains the variable names.
+*--- 1. IMPORT ---*
 import delimited "data/raw/estimated_crimes_1979_2024.csv", clear varnames(1)
 
-*--- STEP 2: INSPECT THE MEAT ---*
-* Before you cut, you look. What variables do we have?
-describe                    
-
-*--- STEP 3: TRIM THE FAT ---*
-* The FBI file has dozens of columns (rape, murder, arson, caveats).
-* We only want: State, Year, Population, and Total Property Crime.
-* Note: Variable names in FBI CSVs can be tricky. They are usually:
-* "state_abbr", "year", "population", "property_crime"
+*--- 2. CLEAN ---*
 keep state_abbr year population property_crime
-
-*--- STEP 4: PREP THE INGREDIENTS (RENAME) ---*
-* "state_abbr" is annoying to type. Let's just call it "state".
-* "property_crime" is long. Let's call it "crimes".
-rename state_abbr state
+rename state_abbr state_abbr  // Keep original name for the tool
 rename property_crime crimes
 
-*--- STEP 5: THE CUT (FILTERING) ---*
-* We only have unemployment data for 2010-2022.
-* So we throw away everything else.
 keep if year >= 2010 & year <= 2022
 
-*--- STEP 6: STORE THE PREP ---*
-* We are done cleaning. Put this in the "Clean" folder (the fridge).
+*--- 3. THE FIX: MERGE WITH CROSSWALK ---*
+* Instead of a package, we merge our own dictionary.
+* This is a "Many-to-One" merge (m:1) because "AL" appears many times in crime data,
+* but only once in our dictionary.
+merge m:1 state_abbr using "data/clean/crosswalk.dta"
+
+* Check the merge!
+* _merge == 3 means "Matched". 
+* _merge == 1 means "In Master only" (Maybe 'National Total' rows?)
+* We only keep the matches (3).
+keep if _merge == 3
+drop _merge
+
+*--- 4. FINAL POLISH (The "Yellow Text" Fix) ---*
+* Remove commas so STATA recognizes these as numbers
+* "ignore(,)" tells STATA to pretend the commas don't exist
+destring population crimes, replace ignore(",")
+
+* This forcibly removes the second "North Carolina 2022"
+duplicates drop state_id year, force
+
+* Move the ID to the far left so it's easier to read
+order state_id year population crimes
+
+* Force the sort order: State 1 (2010), State 1 (2011)...
+sort state_id year
 save "data/clean/crime_data.dta", replace
+
+display "SUCCESS! Crime data has numeric IDs."	
